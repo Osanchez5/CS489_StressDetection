@@ -7,6 +7,6 @@ class TimesNet(nn.Module):
         super(TimesNet, self).__init__()
 
 
-def forward(self, x):
+    def forward(self, x):
 
-    return x
+        return x
