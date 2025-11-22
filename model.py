@@ -24,13 +24,14 @@ class TimesNet(nn.Module):
                                            configs.dropout)
         self.layer = configs.e_layers
         self.layer_norm = nn.LayerNorm(configs.d_model)
-        # classification will be the default no matter what for this project
+        # classification will be the default, unless we find another task that suits the dataset more
         self.actFunc = F.gelu
         self.dropout = nn.Dropout(configs.dropout)
         self.projection = nn.Linear(configs.d_model * configs.seq_len, configs.num_class)
 
 
-
+    # Probably won't be needed since it only serves to make selection between different tasks
+    # Easier in the source code
     # def classification(self, x_enc, x_mark_enc):
     #     # Will be changed depending on our needs most likely
     #     enc_out = self.enc_embedding(x_enc, None)
