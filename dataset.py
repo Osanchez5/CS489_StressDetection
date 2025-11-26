@@ -3,73 +3,49 @@ from torch.utils.data import Dataset
 import numpy as np
 import pandas as pd
 import os
-import datatime
-
-# From Wearable_Dataset.ipynb file to create a vector from the dataframe
-def create_df_array(dataframe):
-    matrix_df = dataframe.values
-    matrix = np.array(matrix_df)
-    array_df = matrix.flatten()
-    return array_df
-
-# From Wearable_Dataset.ipynb file to convert UTC arrays to array in seconds relative to 0 (record beginning)
-def time_abs(UTC_array):
-    new_array = []
-    for utc in UTC_array:
-        time=(datetime.datetime.strptime(utc,'%Y-%m-%d %H:%M:%S')-datetime.datetime.strptime(UTC_array[0], '%Y-%m-%d %H:%M:%S')).total_seconds()
-        new_array.append(int(time))
-    return new_array
-
-# From Wearable_Dataset.ipynb file to get all features (signals) from directory and place them in dictionaries
-def read_signals(main_folder):
-    signal_dict = {}
-    time_dict = {}
-    fs_dict = {}
-
-    subfolders = next(os.walk(main_folder))[1]
-    utc_start_dict = {}
-
-    for folder_name in subfolders
-        folder_path = os.path.join(main_folder, folder_name)
-        files = os.listdir(folder_path)
-        
-        signals = {}
-        time_line = {}
-        fs_signal = {}
-
-        desired_files = {'HR.csv', 'tags.csv'}
-
-        for file_name in files:
-            file_path = os.path.join(folder_path, file_name)
-            if file_name.endswith('.csv') and file_name in desired_files:
-                if file_name == 'tags.csv':
-                    try:
-                        df = pd.read_csv(file_path, header=None)
-                        tags_vector = create_df_array(df)
-                        tags_UTC_vector = np.insert(tags_vector, 0, utc_start_dict[folder_name])
-                        signal_array = time_abs(tags_UTC_vector)
-                    except pd.errors.EmptyDataError:
-                        signal_array=[]
-                
-                else:
-                    df = pd.read_csv(file_path)
-                    fs = df.loc[0]
-                    fs = int(fs[0])
-                    df.drop([0], axis = 0, inplace=True)
-                    signal_array = df.values
-                    time_array = np.linspace(0, len(signal_array)/fs, len(signal_array))
-                
-                signal_name = file_name.split('.')[0]
-                signals[signal_name] = signal_array
-                time_line[signal_name] = time_array
-                fs_signal[signal_name] = fs
-        
-        signal_dict[folder_name] = signals
-        time_dict[folder_name] = time_line
-        fs_dict[folder_name] = fs_signal
-
-        return signal_dict, time_dict, fs_dict
-
+import datetime
 
 class StressDetectionDataset(Dataset):
-    def __init__(self, signal_data)
+    # Just used Heart Rate for now, and uses a sequence length of 64
+    def __init__(self, path, ts_length = 64):
+        self.samples = []
+        self.labels = []
+        self.class_map = {'STRESS': 0, 'AEROBIC': 1, 'ANAEROBIC': 2}
+
+        for label_name, label_idx in self.class_map.items():
+            # Each label has it's own directory in Wearable_Dataset
+            class_dir = os.path.join(path, label_name)
+
+            # Each subject has it's own directory inside Wearable_Dataset/LABEL (STRESS, AEROBIC, ANAEROBIC)
+            for subject_name in os.listdir(class_dir):
+                subject_dir = os.path.join(class_dir, subject_name)
+                hr_file = os.path.join(subject_dir, 'HR.csv')
+
+                # Have to skip first two rows, data starts at row 3
+                df = pd.read_csv(hr_file, header=None, skiprows=2)
+                hr_values = df[0].values.astype(float)
+
+            total_sequences = len(hr_values) // ts_length
+
+            # Seperate each samples by the sequence length
+            for i in range(total_sequences):
+                start = i * ts_length
+                end = start + ts_length
+                sequence = hr_values[start:end]
+
+                self.samples.append(sequence)
+                self.labels.append(label_idx)
+        
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        x = self.samples[index]
+        y = self.samples[index]
+
+        x_tensor = torch.tensor(x, dtype=torch.float32)
+        y_tensor = torch.tensor(y, dtype=torch.float32)
+
+        x_tensor = x_tensor.unsqueeze(-1) # unsqueeze so we have the B,T,N shape
+
+        return x_tensor, y_tensor

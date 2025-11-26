@@ -27,7 +27,7 @@ class TimesNet(nn.Module):
         # classification will be the default, unless we find another task that suits the dataset more
         self.actFunc = F.gelu
         self.dropout = nn.Dropout(configs.dropout)
-        self.projection = nn.Linear(configs.d_model * configs.seq_len, configs.num_class)
+        self.projection = nn.Linear(configs.d_model * configs.seq_len, configs.num_classes)
 
 
     # Probably won't be needed since it only serves to make selection between different tasks
