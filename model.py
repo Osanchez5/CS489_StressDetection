@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.fft
-from Temporary.Embed import DataEmbedding
-from Temporary.Conv_Blocks import Inception_Block_V1
+from Modules.Embed import DataEmbedding
+from Modules.Conv_Blocks import Inception_Block_V1
 
 
 # Initial layout for the model, will definitely be changed as we do further research on Transformer models and TimesNet
@@ -47,8 +47,40 @@ class TimesNet(nn.Module):
     #     output = self.projection(output)
     #     return output
 
+    # def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
+    #     # Normalization from Non-stationary Transformer at temporal dimension
+    #     means = x_enc.mean(1, keepdim=True).detach() #[B,T]
+    #     x_enc = x_enc - means
+    #     stdev = torch.sqrt(
+    #         torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
+    #     x_enc /= stdev
+
+    #     # embedding: projecting a number to a C-channel vector
+    #     enc_out = self.enc_embedding(x_enc, x_mark_enc)  # [B,T,C] C is d_model
+    #     enc_out = self.predict_linear(enc_out.permute(0, 2, 1)).permute(
+    #         0, 2, 1)  # align temporal dimension [B,pred_len+seq_len,C]
+        
+    #     # TimesNet: pass through TimesBlock for self.layer times each with layer normalization
+    #     for i in range(self.layer):
+    #         enc_out = self.layer_norm(self.model[i](enc_out))
+
+    #     # project back  #[B,T,d_model]-->[B,T,c_out]
+    #     dec_out = self.projection(enc_out) 
+
+    #     # De-Normalization from Non-stationary Transformer
+    #     dec_out = dec_out * \
+    #             (stdev[:, 0, :].unsqueeze(1).repeat(
+    #                 1, self.pred_len + self.seq_len, 1)) #lengthen the stdev to fit the dec_out
+    #     dec_out = dec_out + \
+    #             (means[:, 0, :].unsqueeze(1).repeat(
+    #                 1, self.pred_len + self.seq_len, 1)) #lengthen the mean to fit the dec_out
+    #     return dec_out
+
     def forward(self, x_enc, x_mark_enc):
         # dec_out = self.classification(x_enc, x_mark_enc)
+
+        # Update to add forecast code
+
 
         enc_out = self.enc_embedding(x_enc, None)
         for i in range(self.layer):
