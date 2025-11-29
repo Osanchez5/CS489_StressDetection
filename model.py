@@ -85,7 +85,7 @@ class TimesNet(nn.Module):
         enc_out = self.enc_embedding(x_enc, None)
         for i in range(self.layer):
             enc_out = self.layer_norm(self.model[i](enc_out))
-        output = self.act(enc_out)
+        output = self.actFunc(enc_out)
         output = self.dropout(output)
 
         # Zero-out padding embeddings
@@ -142,6 +142,7 @@ class TimesBlock(nn.Module):
         period_weight = F.softmax(period_weight, dim=1)
         period_weight = period_weight.unsqueeze(1).unsqueeze(1).repeat(1, T, N, 1)
 
+        res = torch.sum(res * period_weight, -1) # have to combine in order to have same shape as x for combining in next line
         res = res + x
         return res
 
@@ -152,6 +153,6 @@ def FFT_for_Period(x, k=2):
     frequency_list = abs(xf).mean(0).mean(-1)
     frequency_list[0] = 0
     _, top_list = torch.topk(frequency_list, k)
-    top_list = top_list.detach.cpu().numpy()
+    top_list = top_list.detach().cpu().numpy()
     period = x.shape[1] // top_list
     return period, abs(xf).mean(-1)[:, top_list]
