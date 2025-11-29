@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import KFold, train_test_split
-# from losses import DiceLoss, CrossEntropyLoss # Added CE Loss to losses.py
+from losses import MSE_loss, MAE_loss
 from dataset import StressDetectionDataset
 from model import TimesNet
 # from train import train_one_epoch, validate, test
