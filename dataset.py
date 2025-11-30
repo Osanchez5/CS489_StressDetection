@@ -83,7 +83,7 @@ class StressDetectionDataset(Dataset):
                     task_start = task_idx * segments_per_task
                     task_end = (task_idx + 1) * segments_per_task
 
-                    for start in range(task_start, task_end - ts_length + 1, ts_length):
+                    for start in range(task_start, task_end - ts_length + 1, step):
                         end = start + ts_length
                         sequence = merged_values[start:end]
 
