@@ -32,14 +32,16 @@ def run_training(args: Any) -> None:
     print(f"Total segements loaded : {len(dataset)}")
     kfLength = np.arange(len(dataset))
 
-    best_acc, best_path = 0.0, Path("../models/best.pt")
-    # df = None # For now
+    best_mae, best_path = float('inf'), Path("models/best.pt")
+    best_path.parent.mkdir(parents=True, exist_ok=True)
+
     os.makedirs(os.path.join(args.output_dir, args.version, "logs"), exist_ok=True)
     fold_results, train_df, val_df = [], [], []
 
     # Kfold dataset splitting
     # Will potentially be changed depending on how the dataset is read in
     kf = KFold(n_splits=args.num_folds, shuffle=True, random_state=args.seed)
+
     for fold, (train_val_idx, test_idx) in enumerate(kf.split(kfLength)):
         # Get the test and training data
         print(f"================================= FOLD {fold+1} =================================")
@@ -65,7 +67,7 @@ def run_training(args: Any) -> None:
         # Loss here
 
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-        # criterion = nn.CrossEntropyLoss()
+
         # Try this loss, regression task
         criterion = MAE_loss()
         # Training loop here
@@ -73,20 +75,22 @@ def run_training(args: Any) -> None:
         for epoch in range(args.epochs):
             start_time = time.time()
 
-            train_loss, train_acc = train_one_epoch(model, train_dl, criterion, optimizer, DEVICE)
-            val_loss, val_acc = validate(model, val_dl, criterion, DEVICE)
+            train_loss, train_mae = train_one_epoch(model, train_dl, criterion, optimizer, DEVICE)
+            val_loss, val_mae = validate(model, val_dl, criterion, DEVICE)
 
             end_time = time.time()
             epoch_mins = int((end_time - start_time) / 60)
             epoch_secs = int((end_time - start_time) % 60)
 
-            print(f"EPOCH {epoch+1}/{args.epochs} | Time: {epoch_mins}m {epoch_secs}s | Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}"
-                    f"| Val Loss: {val_loss:.4f} | Val Accuracy: {val_acc:.4f}")
+            print(f"EPOCH {epoch+1}/{args.epochs} | Time: {epoch_mins}m {epoch_secs}s | Train Loss: {train_loss:.4f} | Train MAE: {train_mae:.4f}"
+                    f"| Val Loss: {val_loss:.4f} | Val MAE: {val_mae:.4f}")
+
             # From sample code given in class, save the most accurate model
-            if val_acc > best_acc:
-                best_acc = val_acc
+            if val_mae < best_mae:
+                best_mae = val_mae
                 torch.save(model.state_dict(), best_path)
-                print(f"    [saved] {best_path} (acc={best_acc:.4f})")
+                print(f"    [saved] {best_path} (mae={best_mae:.4f})")
+
 
 if __name__ == "__main__":
     args = config_args.parse_args()

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class MAE_loss():
+class MAE_loss(nn.Module):
     def __init__(self):
         super(MAE_loss, self).__init__()
     
