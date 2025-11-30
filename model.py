@@ -11,6 +11,12 @@ from Modules.Conv_Blocks import Inception_Block_V1
 # Original article had different use cases for TimesNet, we probably only have to worry about classification more than anything
 # They separated the TimesNet model and the TimesBlock into separate classes
 class TimesNet(nn.Module):
+    """
+    Paper link: https://openreview.net/pdf?id=ju_Uqw384Oq
+    The paper and it's corresponding github repository were incredibly
+    valuable in writing the code for the TimesNet model. The goal was to modify the model
+    to take in multiple inputs at once. Which turned out to be more difficult than initially perceived
+    """
     def __init__(self, configs):
         super(TimesNet, self).__init__()
         self.configs = configs
@@ -24,6 +30,10 @@ class TimesNet(nn.Module):
                                            configs.dropout)
         self.layer = configs.e_layers
         self.layer_norm = nn.LayerNorm(configs.d_model)
+        # Forecasting code
+        self.predict_linear = nn.Linear(self.seq_len, self.pred_len + self.seq_len)
+        self.projection = nn.Linear(configs.d_model, configs.c_out, bias=True)
+        
         # classification will be the default, unless we find another task that suits the dataset more
         self.actFunc = F.gelu
         self.dropout = nn.Dropout(configs.dropout)
