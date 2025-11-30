@@ -41,27 +41,43 @@ class StressDetectionDataset(Dataset):
             if subject_id in self.stress_scores:
                 subject_dir = os.path.join(class_dir, subject_name)
                 hr_file = os.path.join(subject_dir, 'HR.csv')
+                eda_file = os.path.join(subject_dir, 'EDA.csv')
+                temp_file = os.path.join(subject_dir, 'TEMP.csv')
 
-                meta_df = pd.read_csv(hr_file, header=None, nrows=2)
-                start_val = meta_df.iloc[0,0]
+                def load_signal(filepath, col_name):
+                    try:
+                        meta = pd.read_csv(filepath, header=None, nrows=2)
+                        start_time = float(meta.iloc[0,0]) if isinstance(meta.iloc[0, 0], (int, float)) else pd.to_datetime(meta.iloc[0, 0]).timestamp()
+                        freq = float(meta.iloc[1,0])
 
-                try:
-                    start_timestamp = float(start_val)
-                except ValueError:
-                    start_timestamp = pd.to_datetime(start_val).timestamp()
+                        data = pd.read_csv(filepath, header=None, skiprows=2)
+                        values = data[0].values.astype(float)
 
-                frequency = float(meta_df.iloc[1,0])
+                        time_index = pd.to_datetime(start_time, unit='s') + pd.to_timedelta(np.arange(len(values)) / freq, unit='s')
+                        series = pd.Series(values, index=time_index, name=col_name)
+                        resampled = series.resample('1s').mean()
+                        return resampled
+                    except Exception as e:
+                        print(f"Error loading {filepath}: {e}")
+                        return None
 
-                df_hr = pd.read_csv(hr_file, header=None, skiprows=2)
-                hr_values = df_hr[0].values.astype(float)
+                hr_series = load_signal(hr_file, 'HR')
+                eda_series = load_signal(eda_file, 'EDA')
+                temp_series = load_signal(temp_file, 'TEMP')
 
-                num_samples = len(hr_values)
-                if num_samples < ts_length:
+                if hr_series is None or eda_series is None or temp_series is None:
                     continue
 
+                df_merged = pd.concat([hr_series, eda_series, temp_series], axis=1, join='inner')
+                
+                if len(df_merged) < ts_length:
+                    continue
+
+                merged_values = df_merged.values
+                timestamps = df_merged.index
+
                 subject_scores = list(self.stress_scores[subject_id].values())
-                segments_per_task = num_samples // len(subject_scores)
-                # print(f" [Processing] {subject_id}: {len(subject_scores)} tasks, {segments_per_task} steps/task.")
+                segments_per_task = len(merged_values) // len(subject_scores)
 
                 for task_idx, score in enumerate(subject_scores):
                     task_start = task_idx * segments_per_task
@@ -69,13 +85,13 @@ class StressDetectionDataset(Dataset):
 
                     for start in range(task_start, task_end - ts_length + 1, ts_length):
                         end = start + ts_length
-                        sequence = hr_values[start:end]
+                        sequence = merged_values[start:end]
 
-                        seq_start_time = start_timestamp + (start / frequency)
+                        seq_start_time = timestamps[start]
                         dates = pd.date_range(
-                            start=pd.to_datetime(seq_start_time, unit='s'),
+                            start=seq_start_time,
                             periods=ts_length,
-                            freq=f'{1000/frequency}ms'
+                            freq='1s'
                         )
 
                         time_features = np.stack([
@@ -98,16 +114,15 @@ class StressDetectionDataset(Dataset):
         x = self.samples[index]
         y = self.labels[index]
         t = self.timestamps[index]
-        
-        mean = np.mean(x)
-        std = np.std(x)
 
-        if std == 0:
-            std = 1.0
+        mean = np.mean(x, axis=0)
+        std = np.std(x, axis=0)
+
+        std[std==0] = 1.0
         
         x = (x - mean) / std
 
-        x_tensor = torch.tensor(x, dtype=torch.float32).unsqueeze(-1)
+        x_tensor = torch.tensor(x, dtype=torch.float32)
         y_tensor = torch.tensor([y], dtype=torch.float32)
         t_tensor = torch.tensor(t, dtype=torch.float32)
 
