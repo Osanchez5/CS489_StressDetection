@@ -24,10 +24,14 @@ class TimesNet(nn.Module):
                                            configs.dropout)
         self.layer = configs.e_layers
         self.layer_norm = nn.LayerNorm(configs.d_model)
+        # Forecasting code
+        self.predict_linear = nn.Linear(self.seq_len, self.pred_len + self.seq_len)
+        self.projection = nn.Linear(configs.d_model, configs.c_out, bias=True)
+        
         # classification will be the default, unless we find another task that suits the dataset more
-        self.actFunc = F.gelu
-        self.dropout = nn.Dropout(configs.dropout)
-        self.projection = nn.Linear(configs.d_model * configs.seq_len, configs.num_classes)
+        # self.actFunc = F.gelu
+        # self.dropout = nn.Dropout(configs.dropout)
+        # self.projection = nn.Linear(configs.d_model * configs.seq_len, configs.num_classes)
 
 
     # Probably won't be needed since it only serves to make selection between different tasks

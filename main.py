@@ -62,8 +62,6 @@ def run_training(args: Any) -> None:
         # LSTM model, values are hardcoded in LSTM.py
         # model = LSTM().to(DEVICE)
 
-        # Loss here
-
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         # criterion = nn.CrossEntropyLoss()
         # Try this loss, regression task
