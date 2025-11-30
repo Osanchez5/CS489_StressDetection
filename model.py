@@ -11,6 +11,12 @@ from Modules.Conv_Blocks import Inception_Block_V1
 # Original article had different use cases for TimesNet, we probably only have to worry about classification more than anything
 # They separated the TimesNet model and the TimesBlock into separate classes
 class TimesNet(nn.Module):
+    """
+    Paper link: https://openreview.net/pdf?id=ju_Uqw384Oq
+    The paper and it's corresponding github repository were incredibly
+    valuable in writing the code for the TimesNet model. The goal was to modify the model
+    to take in multiple inputs at once. Which turned out to be more difficult than initially perceived
+    """
     def __init__(self, configs):
         super(TimesNet, self).__init__()
         self.configs = configs

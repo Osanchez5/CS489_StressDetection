@@ -27,7 +27,8 @@ config_args.add_argument('--version', type = str, default = "Model_1", help = "T
 # Model specific arguments
 config_args.add_argument('--task_name', type=str, default='forecasting')
 config_args.add_argument('--seq_len', type=int, default=64)
-config_args.add_argument('--label_len')
+config_args.add_argument('--label_len', type=int, default=1)
+config_args.add_argument('--c_out', type=int, default=1)
 
 # config_args.add_argument('--task_name', type=str, default="classification")
 # config_args.add_argument('--seq_len', type=int, default=64)
