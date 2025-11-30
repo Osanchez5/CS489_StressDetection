@@ -10,8 +10,8 @@ config_args.add_argument('--csv_file', type = str, default = "dataset.csv", help
 
 #----------------------------------- Preprocessing Configs -----------------------------------#
 config_args.add_argument('--seed', type = int, default = 42, help = "seed for reproduciability")
-config_args.add_argument('--image_size', type = int, default = 256, help = "Resize images to dimention image_size X image_size")
-config_args.add_argument('--num_classes', type = int, default = 2, help = "# of classes")
+
+#----------------------------------- Model Configs -----------------------------------#
 
 #----------------------------------- Training Configs -----------------------------------#
 config_args.add_argument('--epochs', type = int, default = 20, help = "# of epochs")
@@ -22,3 +22,23 @@ config_args.add_argument('--lr', type = float, default = 1e-5, help = "learning 
 config_args.add_argument('--output_dir', type = str, default = "./outputs", help = "The root directory of the outputs")
 config_args.add_argument('--device_name', type = str, default = "0", help = "The available gpu in the cluster, check with nvidia_smi")
 config_args.add_argument('--version', type = str, default = "Model_1", help = "The name of the version run (creates a directory based on the name).")
+
+
+# Model specific arguments
+config_args.add_argument('--task_name', type=str, default='forecasting')
+config_args.add_argument('--seq_len', type=int, default=64)
+config_args.add_argument('--label_len')
+
+config_args.add_argument(--'task_name', type=str, default="classification")
+config_args.add_argument('--seq_len', type=int, default=64)
+config_args.add_argument('--label_len', type=int, default=1)
+config_args.add_argument('--pred_len', type=int, default=0)
+config_args.add_argument('--enc_in', type=int, default=1)
+config_args.add_argument('--d model', type-int, default='64')
+config_args.add_argument('--embd', type=str, default='fixed')
+config_args.add_argument('--freq', type-str, default='s')
+config_args.add_argument('--dropout', type=float, default=0.1)
+config_args.add_argument('--e_layers', type=int, default=3)
+config_args.add_argument('-- dff', type=int, default=64)
+config_args.add_argument( "--num_ kernels", type=int, default=6)
+config_args.add_argument('--top_k', type=int, default=3)

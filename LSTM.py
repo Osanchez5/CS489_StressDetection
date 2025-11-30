@@ -7,6 +7,7 @@ class LSTM(nn.Module):
     def __init__(self, inputDim=3, hiddenDim=1, layerDim=1, outputDim=1):
         super(LSTM, self).__init__()
 
+        # Set values for nn.LSTM and nn.Linear
         self.hD = hiddenDim
         self.lD = layerDim
         self.lstm = nn.LSTM(inputDim, hiddenDim, layerDim)
