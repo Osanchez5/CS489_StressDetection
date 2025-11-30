@@ -7,7 +7,7 @@ class MAE_loss():
         super(MAE_loss, self).__init__()
     
     def forward(self, predicted, targets):
-        # 1/N SUME(|targets - predicted|)
+        # 1/N SUM(|targets - predicted|)
         abs_diff = torch.abs(targets - predicted)
         loss = torch.mean(abs_diff)
         return loss

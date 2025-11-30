@@ -9,10 +9,11 @@ from sklearn.model_selection import KFold, train_test_split
 from losses import MSE_loss, MAE_loss
 from dataset import StressDetectionDataset
 from model import TimesNet
-# from train import train_one_epoch, validate, test
+from train import train_one_epoch, validate, test
 from config import config_args
 from typing import Any
-from train import train_one_epoch, validate, test
+from LSTM import LSTM
+from pathlib import Path
 
 def run_training(args: Any) -> None:
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device_name
@@ -31,6 +32,7 @@ def run_training(args: Any) -> None:
     print(f"Total segements loaded : {len(dataset)}")
     kfLength = np.arange(len(dataset))
 
+    best_acc, best_path = 0.0, Path("../models/best.pt")
     # df = None # For now
     os.makedirs(os.path.join(args.output_dir, args.version, "logs"), exist_ok=True)
     fold_results, train_df, val_df = [], [], []
@@ -57,11 +59,15 @@ def run_training(args: Any) -> None:
 
         # The arguments will probably have to be updated to work with the model
         model = TimesNet(args).to(DEVICE)
+        # LSTM model, values are hardcoded in LSTM.py
+        # model = LSTM().to(DEVICE)
 
         # Loss here
 
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-        criterion = nn.CrossEntropyLoss()
+        # criterion = nn.CrossEntropyLoss()
+        # Try this loss, regression task
+        criterion = MAE_loss()
         # Training loop here
 
         for epoch in range(args.epochs):
@@ -76,6 +82,11 @@ def run_training(args: Any) -> None:
 
             print(f"EPOCH {epoch+1}/{args.epochs} | Time: {epoch_mins}m {epoch_secs}s | Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}"
                     f"| Val Loss: {val_loss:.4f} | Val Accuracy: {val_acc:.4f}")
+            # From sample code given in class, save the most accurate model
+            if val_acc > best_acc:
+                best_acc = val_acc
+                torch.save(model.state_dict(), best_path)
+                print(f"    [saved] {best_path} (acc={best_acc:.4f})")
 
 if __name__ == "__main__":
     args = config_args.parse_args()
